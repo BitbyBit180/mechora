@@ -12,6 +12,7 @@ from products.models import Product
 from .models import Inspection
 from .services.inference import predict
 from .services.validation import validate_image
+from .services.integrity import verify_model_integrity
 
 
 def image_file(name="sample.png", image_format="PNG", size=(128, 128)):
@@ -104,6 +105,18 @@ class InspectionWorkflowTests(TestCase):
         result = predict("round2_resources/Samples/images/inspection_001.png")
         self.assertEqual(result["model_version"], "BIT-PLATE-CV-1.0")
         self.assertIn(result["predicted_class"], {"Normal", "Defective"})
+
+    def test_supplied_model_files_match_published_checksums(self):
+        result = verify_model_integrity()
+        self.assertTrue(result["valid"], result)
+        self.assertGreaterEqual(result["checked"], 4)
+
+    def test_prd_batch_alias_and_model_integrity_endpoint(self):
+        self.client.force_login(self.supervisor)
+        self.assertEqual(self.client.get("/api/batches/not-a-uuid/").status_code, 404)
+        response = self.client.get("/api/inspections/model-integrity/")
+        self.assertEqual(response.status_code, 200)
+        self.assertTrue(response.json()["valid"])
 
     def test_administrator_can_assign_inspection_to_engineer(self):
         with patch("inspections.views.process_inspection.delay"):

@@ -32,6 +32,7 @@ urlpatterns = [
     path("api/manuals/", include("manuals.urls")),
     path("api/products/", include("products.urls")),
     path("api/inspections/", include("inspections.urls")),
+    path("api/batches/", include("inspections.batch_urls")),
     path("inspections/", include("inspections.web_urls")),
 ]
 

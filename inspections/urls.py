@@ -12,6 +12,7 @@ from .views import (
     inspection_status,
     inspection_evaluation,
     inspection_dashboard,
+    model_integrity,
     supervisor_dashboard,
 )
 
@@ -24,6 +25,7 @@ urlpatterns = [
     path("batch/", inspection_batch, name="batch"),
     path("statistics/", inspection_statistics, name="statistics"),
     path("evaluation/", inspection_evaluation, name="evaluation"),
+    path("model-integrity/", model_integrity, name="model-integrity"),
     path("<uuid:inspection_id>/", inspection_detail, name="detail"),
     path("<uuid:inspection_id>/status/", inspection_status, name="status"),
     path("<uuid:inspection_id>/review/", inspection_review, name="review"),

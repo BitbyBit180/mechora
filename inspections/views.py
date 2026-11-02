@@ -15,6 +15,7 @@ from .models import Inspection, InspectionBatch, InspectionReview
 from .services.validation import validate_image
 from .tasks import process_inspection
 from .services.evaluation import evaluate_samples
+from .services.integrity import verify_model_integrity
 
 User = get_user_model()
 
@@ -271,6 +272,15 @@ def inspection_evaluation(request):
     if _role(request) not in {"Admin", "Supervisor"} and not request.user.is_superuser:
         return JsonResponse({"detail": "Administrator or Supervisor role required."}, status=403)
     return JsonResponse(evaluate_samples())
+
+
+@require_GET
+def model_integrity(request):
+    if not request.user.is_authenticated:
+        return JsonResponse({"detail": "Authentication credentials were not provided."}, status=401)
+    if _role(request) not in {"Admin", "Supervisor"} and not request.user.is_superuser:
+        return JsonResponse({"detail": "Administrator or Supervisor role required."}, status=403)
+    return JsonResponse(verify_model_integrity())
 
 
 @require_GET
