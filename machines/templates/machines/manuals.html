@@ -1,0 +1,29 @@
+{% load static %}
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>{{ machine.machine_name|default:machine.machine_id }} · Manuals</title>
+  <link rel="stylesheet" href="{% static 'machines/machine_manuals.css' %}?v=1">
+</head>
+<body class="manuals-page">
+  <header class="manuals-topbar">
+    <a class="manuals-brand" href="{% url 'assistant:chat' %}"><span>M</span> Manual Assistant</a>
+    <a class="back-link" href="{% url 'assistant:chat' %}">← Back to dashboard</a>
+  </header>
+  <main class="manuals-container">
+    <a class="back-link mobile-back" href="{% url 'assistant:chat' %}">← Back to dashboard</a>
+    <div class="manuals-kicker">ENGINEER DOCUMENT LIBRARY</div>
+    <div class="machine-heading"><div><h1>{{ machine.machine_name|default:machine.machine_id }}</h1><p>{{ machine.model|default:machine.machine_id }} · {{ machine.description|default:"Registered manufacturing equipment" }}</p></div><span class="machine-badge">Engineer access · Read only</span></div>
+    <section class="documents-section" aria-labelledby="documents-title">
+      <div class="documents-heading"><div><h2 id="documents-title">Manuals and documents</h2><p>{{ manuals|length }} document{{ manuals|length|pluralize }} available for this machine.</p></div></div>
+      <div class="document-list">
+        {% for manual in manuals %}
+        <article class="document-card"><div class="document-icon">PDF</div><div class="document-info"><h3>{{ manual.document_name }}</h3><p>{{ machine.machine_name|default:machine.machine_id }} · Revision {{ manual.revision }}</p><span>Uploaded {{ manual.uploaded_at|date:"M j, Y" }}</span></div><a class="document-open" href="{% url 'manuals:pdf' manual.pk %}" target="_blank" rel="noopener">Open PDF <span aria-hidden="true">↗</span></a></article>
+        {% empty %}<div class="documents-empty"><strong>No manuals available yet</strong><p>Documents uploaded by an administrator for this machine will appear here.</p></div>{% endfor %}
+      </div>
+    </section>
+  </main>
+</body>
+</html>
