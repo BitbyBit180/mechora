@@ -53,3 +53,23 @@ def can_view_groups(request):
     if request.user.is_superuser:
         return True
     return bool(getattr(request.user, "id", None) and request.user.has_perm("auth.view_group"))
+
+
+def can_view_products(request):
+    if not (request.user and request.user.is_active and request.user.is_staff):
+        return False
+    if request.user.is_superuser:
+        return True
+    return bool(getattr(request.user, "id", None) and request.user.has_perm("products.view_product"))
+
+
+def can_manage_inspections(request):
+    if not (request.user and request.user.is_active and request.user.is_staff):
+        return False
+    if request.user.is_superuser:
+        return True
+    return bool(
+        getattr(request.user, "id", None)
+        and request.user.has_perm("inspections.view_inspection")
+        and request.user.has_perm("inspections.change_inspection")
+    )

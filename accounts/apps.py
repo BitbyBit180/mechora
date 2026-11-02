@@ -18,4 +18,6 @@ class AccountsConfig(AppConfig):
     verbose_name = "User Accounts & Security"
 
     def ready(self):
-        post_migrate.connect(setup_roles_on_post_migrate, sender=self)
+        # Run after every app's migrations so Phase 2 model permissions also
+        # exist before the designated groups are synchronized.
+        post_migrate.connect(setup_roles_on_post_migrate, dispatch_uid="mechora.ensure_roles")

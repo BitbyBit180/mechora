@@ -50,6 +50,16 @@ ROLE_PERMISSIONS_MAP = {
         ("rag", "change_ragdocumentchunk"),
         ("rag", "delete_ragdocumentchunk"),
         ("rag", "view_ragdocumentchunk"),
+        # Phase 2 products and inspections
+        ("products", "add_product"),
+        ("products", "change_product"),
+        ("products", "delete_product"),
+        ("products", "view_product"),
+        ("inspections", "view_inspection"),
+        ("inspections", "add_inspection"),
+        ("inspections", "change_inspection"),
+        ("inspections", "view_inspectionbatch"),
+        ("inspections", "view_inspectionreview"),
     ],
     ROLE_ENGINEER: [
         # Engineering access: read equipment, documentation, and query logs
@@ -57,6 +67,9 @@ ROLE_PERMISSIONS_MAP = {
         ("manuals", "view_manual"),
         ("rag", "view_ragquerylog"),
         ("rag", "view_ragdocumentchunk"),
+        ("products", "view_product"),
+        ("inspections", "add_inspection"),
+        ("inspections", "view_inspection"),
     ],
     ROLE_SUPERVISOR: [
         # Supervisor access: read equipment, documentation, and operational monitoring
@@ -64,6 +77,12 @@ ROLE_PERMISSIONS_MAP = {
         ("manuals", "view_manual"),
         ("rag", "view_ragquerylog"),
         ("rag", "view_ragdocumentchunk"),
+        ("products", "view_product"),
+        ("inspections", "view_inspection"),
+        ("inspections", "view_inspectionbatch"),
+        ("inspections", "view_inspectionreview"),
+        ("inspections", "add_inspectionreview"),
+        ("inspections", "change_inspectionreview"),
     ],
 }
 
