@@ -46,4 +46,15 @@ class ManualIngestionTaskTests(TestCase):
         self.assertEqual(result["status"], "failed")
         self.assertEqual(self.manual.ingestion_status, Manual.IngestionStatus.FAILED)
 
+    @patch("manuals.tasks.ingest_manual")
+    def test_worker_stops_retrying_on_daily_embedding_quota(self, ingest):
+        ingest.side_effect = RuntimeError("OpenRouter HTTP 429 free-models-per-day")
+
+        result = ingest_manual_task.run(self.manual.pk)
+
+        self.manual.refresh_from_db()
+        self.assertEqual(result["status"], "failed")
+        self.assertEqual(self.manual.ingestion_status, Manual.IngestionStatus.FAILED)
+        self.assertIn("daily limit", result["error"])
+
 # Create your tests here.

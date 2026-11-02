@@ -6,6 +6,11 @@ from .ingestion import ingest_manual
 from .models import Manual
 
 
+def _is_daily_provider_limit(error: Exception) -> bool:
+    message = str(error).lower()
+    return "free-models-per-day" in message or "daily limit" in message
+
+
 def queue_manual_ingestion(manual_id: int) -> None:
     """Publish ingestion after the surrounding database transaction commits."""
 
@@ -40,6 +45,21 @@ def ingest_manual_task(self, manual_id: int) -> dict:
             revision=manual.revision,
         )
     except Exception as exc:
+        if _is_daily_provider_limit(exc):
+            # Retrying cannot help until OpenRouter's daily quota resets. Mark
+            # the manual failed immediately so Admin does not show a task
+            # stuck in pending/processing while Celery retries indefinitely.
+            Manual.objects.filter(pk=manual.pk).update(
+                ingestion_status=Manual.IngestionStatus.FAILED
+            )
+            return {
+                "status": "failed",
+                "manual_id": manual.pk,
+                "error": (
+                    "OpenRouter free-model daily limit reached. "
+                    "Wait for the quota reset or configure a funded/new API key."
+                ),
+            }
         if self.request.retries < self.max_retries:
             Manual.objects.filter(pk=manual.pk).update(
                 ingestion_status=Manual.IngestionStatus.PENDING

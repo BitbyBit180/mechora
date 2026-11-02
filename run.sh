@@ -6,6 +6,10 @@ PROJECT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 PYTHON_BIN="${PYTHON_BIN:-$PROJECT_DIR/venv/bin/python}"
 CELERY_BIN="${CELERY_BIN:-$PROJECT_DIR/venv/bin/celery}"
 
+# run.sh is the local development launcher. Ensure Django serves app static
+# files even when the shell environment contains a production-style DEBUG value.
+export DEBUG=true
+
 if [[ ! -x "$PYTHON_BIN" ]]; then
   PYTHON_BIN="$(command -v python3 || command -v python)"
 fi
@@ -22,10 +26,16 @@ open_terminal() {
   local title="$1"
   local command="$2"
   local project_q
+  local log_name
   printf -v project_q '%q' "$PROJECT_DIR"
+  log_name="${title//[^[:alnum:]_-]/_}"
 
   if command -v gnome-terminal >/dev/null 2>&1; then
-    gnome-terminal --title="$title" -- bash -lc "cd $project_q && $command; status=\$?; echo; echo '$title stopped with status' \$status; exec bash"
+    # Launch asynchronously. Some GNOME installations abort while loading
+    # an invalid desktop setting; that must not terminate this launcher.
+    gnome-terminal --title="$title" -- bash -lc "cd $project_q && $command; status=\$?; echo; echo '$title stopped with status' \$status; exec bash" \
+      >"${TMPDIR:-/tmp}/mechora-${log_name}.log" 2>&1 &
+    disown 2>/dev/null || true
   elif command -v konsole >/dev/null 2>&1; then
     konsole --new-tab -p tabtitle="$title" -e bash -lc "cd $project_q && $command; exec bash" >/dev/null 2>&1 &
   elif command -v xfce4-terminal >/dev/null 2>&1; then
