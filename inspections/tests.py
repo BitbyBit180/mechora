@@ -106,6 +106,27 @@ class InspectionWorkflowTests(TestCase):
         self.assertEqual(result["model_version"], "BIT-PLATE-CV-1.0")
         self.assertIn(result["predicted_class"], {"Normal", "Defective"})
 
+    def test_inspection_details_persist_after_database_reload(self):
+        with patch("inspections.views.process_inspection.delay"):
+            response = self.post_image(self.engineer, image_file("persisted.png"))
+        item = Inspection.objects.get(pk=response.json()["id"])
+        item.predicted_class = "Defective"
+        item.confidence = 0.875
+        item.defect_probability = 0.875
+        item.model_version = "BIT-PLATE-CV-1.0"
+        item.save(update_fields=["predicted_class", "confidence", "defect_probability", "model_version"])
+
+        reloaded = Inspection.objects.get(pk=item.pk)
+        self.assertEqual(reloaded.product_id, self.product.pk)
+        self.assertTrue(reloaded.image.name.endswith("persisted.png"))
+        self.assertEqual(reloaded.original_filename, "persisted.png")
+        self.assertEqual(reloaded.predicted_class, "Defective")
+        self.assertEqual(reloaded.confidence, 0.875)
+        self.assertEqual(reloaded.defect_probability, 0.875)
+        self.assertEqual(reloaded.model_version, "BIT-PLATE-CV-1.0")
+        self.assertEqual(reloaded.submitted_by_id, self.engineer.pk)
+        self.assertIsNotNone(reloaded.created_at)
+
     def test_supplied_model_files_match_published_checksums(self):
         result = verify_model_integrity()
         self.assertTrue(result["valid"], result)
