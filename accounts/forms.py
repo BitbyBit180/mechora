@@ -5,7 +5,7 @@ Provides styled user creation, role selection, and secure password fields.
 
 from django import forms
 from django.contrib.auth import get_user_model, password_validation
-from django.contrib.auth.forms import ReadOnlyPasswordHashField
+from django.contrib.auth.forms import AuthenticationForm, ReadOnlyPasswordHashField, UserCreationForm
 from django.core.exceptions import ValidationError
 from unfold.widgets import (
     UnfoldAdminEmailInputWidget,
@@ -33,6 +33,63 @@ class MechoraPasswordToggleWidget(UnfoldAdminPasswordWidget):
     and a show/hide toggle icon.
     """
     template_name = "accounts/widgets/password_toggle.html"
+
+
+class RoleAuthenticationForm(AuthenticationForm):
+    """Sign-in form that verifies the selected role server-side."""
+
+    role = forms.ChoiceField(
+        choices=ROLE_CHOICES,
+        initial=ROLE_ENGINEER,
+        widget=forms.HiddenInput(),
+    )
+
+    def clean(self):
+        cleaned_data = super().clean()
+        if not self.errors and self.user_cache is not None:
+            selected_role = cleaned_data.get("role")
+            actual_role = get_user_role(self.user_cache)
+            if actual_role == "Superuser":
+                actual_role = ROLE_ADMIN
+            if selected_role != actual_role:
+                raise ValidationError(
+                    "The selected role does not match this account. Choose the correct role and try again."
+                )
+        return cleaned_data
+
+
+class PublicSignupForm(UserCreationForm):
+    """Public registration for operational roles only."""
+
+    email = forms.EmailField(required=True)
+    first_name = forms.CharField(max_length=150, required=True)
+    last_name = forms.CharField(max_length=150, required=True)
+    role = forms.ChoiceField(
+        choices=(
+            (ROLE_ENGINEER, "Engineer"),
+            (ROLE_SUPERVISOR, "Supervisor"),
+        ),
+        initial=ROLE_ENGINEER,
+    )
+
+    class Meta:
+        model = User
+        fields = ("username", "email", "first_name", "last_name", "role")
+
+    def clean_email(self):
+        email = self.cleaned_data["email"].strip().lower()
+        if User.objects.filter(email__iexact=email).exists():
+            raise ValidationError("An account with this email already exists.")
+        return email
+
+    def save(self, commit=True):
+        user = super().save(commit=False)
+        user.email = self.cleaned_data["email"]
+        user.first_name = self.cleaned_data["first_name"]
+        user.last_name = self.cleaned_data["last_name"]
+        if commit:
+            user.save()
+        return user
 
 
 class MechoraUserCreationForm(forms.ModelForm):
