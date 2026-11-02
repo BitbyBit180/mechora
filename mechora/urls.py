@@ -9,7 +9,7 @@ from django.conf import settings
 from django.conf.urls.static import static
 from django.contrib import admin
 from django.shortcuts import redirect
-from django.urls import path
+from django.urls import include, path
 
 
 def root_redirect(request):
@@ -20,6 +20,10 @@ def root_redirect(request):
 urlpatterns = [
     path("", root_redirect, name="root_redirect"),
     path("admin/", admin.site.urls),
+    path("accounts/", include("accounts.urls")),
+    path("assistant/", include("assistant.urls")),
+    path("api/assistant/", include("assistant.api_urls")),
+    path("api/manuals/", include("manuals.urls")),
 ]
 
 if settings.DEBUG:

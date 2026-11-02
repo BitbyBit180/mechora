@@ -3,6 +3,12 @@ from django.db import models
 
 
 class Manual(models.Model):
+    class IngestionStatus(models.TextChoices):
+        PENDING = "pending", "Pending"
+        PROCESSING = "processing", "Processing"
+        COMPLETE = "completed", "Completed"
+        FAILED = "failed", "Failed"
+
     INGESTION_STATUS_CHOICES = [
         ("pending", "Pending"),
         ("processing", "Processing"),
@@ -13,6 +19,8 @@ class Manual(models.Model):
     document_id = models.CharField(
         max_length=50,
         unique=True,
+        blank=True,
+        default="",
         db_index=True,
         verbose_name="Document ID",
         help_text="Standard document identifier (e.g., HP-OPS-01, AC-OM-01)",

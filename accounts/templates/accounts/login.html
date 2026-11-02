@@ -1,0 +1,20 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Sign in · Manual Assistant</title>
+  <style>body{margin:0;display:grid;place-items:center;min-height:100vh;background:#f6f7f8;color:#17202a;font:14px system-ui,sans-serif}.card{width:min(360px,calc(100% - 40px));padding:28px;border:1px solid #e2e6ea;border-radius:14px;background:#fff;box-shadow:0 10px 30px #17202a0b}h1{margin:0 0 6px;font-size:21px}p{color:#78828d}.field{margin:16px 0}.field label{display:block;margin-bottom:6px;font-weight:600}.field input{width:100%;box-sizing:border-box;padding:10px;border:1px solid #d7dce2;border-radius:8px}.submit{width:100%;padding:11px;border:0;border-radius:8px;color:#fff;background:#2563eb;font-weight:700;cursor:pointer}.errorlist{padding:0;color:#b42318;list-style:none;font-size:12px}</style>
+</head>
+<body>
+  <form class="card" method="post">
+    {% csrf_token %}
+    <h1>Manufacturing Manual Assistant</h1>
+    <p>Sign in to ask questions about the manuals.</p>
+    {{ form.non_field_errors }}
+    <div class="field"><label for="id_username">Username</label>{{ form.username }}{{ form.username.errors }}</div>
+    <div class="field"><label for="id_password">Password</label>{{ form.password }}{{ form.password.errors }}</div>
+    <button class="submit" type="submit">Sign in</button>
+  </form>
+</body>
+</html>
