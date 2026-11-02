@@ -1,0 +1,38 @@
+{% load static %}
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>{% block title %}Visual Inspection · MECHORA{% endblock %}</title>
+  <link rel="stylesheet" href="{% static 'inspections/inspection.css' %}">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+</head>
+<body class="app-shell {% block body_class %}{% endblock %}">
+  <button class="sidebar-scrim" id="sidebar-scrim" type="button" aria-label="Close navigation"></button>
+  <aside class="app-sidebar" id="app-sidebar">
+    <div class="sidebar-brand"><span class="brand-mark">M</span><span><strong>MECHORA</strong><small>Visual quality system</small></span></div>
+    <div class="sidebar-user"><span class="user-avatar">{{ request.user.username|slice:":2"|upper }}</span><span><strong>{{ request.user.get_full_name|default:request.user.username }}</strong><small>{% block role_label %}{% endblock %}</small></span></div>
+    <nav class="sidebar-nav" aria-label="Main navigation">
+      <p class="nav-label">WORKSPACE</p>
+      {% block primary_nav %}{% endblock %}
+      <p class="nav-label">MECHORA</p>
+      {% block secondary_nav %}{% endblock %}
+    </nav>
+    <div class="sidebar-footer"><a class="sidebar-link logout" href="{% url 'logout' %}"><span>↪</span> Sign out</a><small>Phase 2 · AI inspection</small></div>
+  </aside>
+  <div class="app-main">
+    <header class="app-topbar"><button class="menu-toggle" id="menu-toggle" type="button" aria-label="Open navigation">☰</button><div class="topbar-context">{% block topbar_context %}Visual quality inspection{% endblock %}</div><div class="topbar-status"><span class="status-dot"></span> System online</div></header>
+    <main class="app-content">{% block content %}{% endblock %}</main>
+  </div>
+  <script>
+    const shell=document.body;
+    document.getElementById('menu-toggle').addEventListener('click',()=>shell.classList.add('sidebar-open'));
+    document.getElementById('sidebar-scrim').addEventListener('click',()=>shell.classList.remove('sidebar-open'));
+    document.querySelectorAll('.sidebar-link').forEach(link=>link.addEventListener('click',()=>shell.classList.remove('sidebar-open')));
+  </script>
+  {% block scripts %}{% endblock %}
+</body>
+</html>
