@@ -302,3 +302,10 @@ def supervisor_question_history(request):
     if not _supervisor(request):
         return JsonResponse({"detail": "Supervisor role required."}, status=403)
     return render(request, "inspections/supervisor_question_history.html")
+
+
+@require_GET
+def model_evaluation_page(request):
+    if not request.user.is_authenticated or (_role(request) not in {"Admin", "Supervisor"} and not request.user.is_superuser):
+        return JsonResponse({"detail": "Administrator or Supervisor role required."}, status=403)
+    return render(request, "inspections/model_evaluation.html")

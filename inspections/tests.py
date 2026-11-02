@@ -140,6 +140,14 @@ class InspectionWorkflowTests(TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertTrue(response.json()["valid"])
 
+    def test_model_evaluation_page_is_supervisor_only(self):
+        self.client.force_login(self.engineer)
+        self.assertEqual(self.client.get("/inspections/evaluation/").status_code, 403)
+        self.client.force_login(self.supervisor)
+        response = self.client.get("/inspections/evaluation/")
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, "Confusion matrix")
+
     def test_administrator_can_assign_inspection_to_engineer(self):
         with patch("inspections.views.process_inspection.delay"):
             response = self.post_image(self.engineer)

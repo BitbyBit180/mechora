@@ -1,0 +1,22 @@
+{% extends 'inspections/base.html' %}
+{% load static %}
+{% block title %}Model evaluation · MECHORA{% endblock %}
+{% block body_class %}supervisor-shell{% endblock %}
+{% block role_label %}Supervisor workspace{% endblock %}
+{% block primary_nav %}
+<a class="sidebar-link" href="{% url 'inspections:supervisor' %}"><span>▦</span> Review dashboard</a>
+<a class="sidebar-link" href="{% url 'inspections:supervisor_questions' %}"><span>✦</span> Question history</a>
+<a class="sidebar-link active" href="{% url 'inspections:evaluation' %}"><span>▤</span> Model evaluation</a>
+{% endblock %}
+{% block topbar_context %}Supervisor workspace <span>/</span> Model evaluation{% endblock %}
+{% block content %}
+<div class="page-heading"><div><h1>Model evaluation</h1><p class="muted">Evaluation of the supplied classifier using all 60 labeled Round 2 samples.</p></div><span class="role-pill">Supervisor access</span></div>
+<div id="evaluation-loading" class="card evaluation-message">Running evaluation…</div>
+<div id="evaluation-error" class="card evaluation-message evaluation-error" hidden></div>
+<div id="evaluation-results" hidden>
+  <section class="metric-grid"><div class="metric-card"><small>Samples evaluated</small><strong id="eval-total">—</strong></div><div class="metric-card"><small>Defect recall</small><strong id="eval-recall" class="good">—</strong></div><div class="metric-card"><small>Accuracy</small><strong id="eval-accuracy" class="good">—</strong></div><div class="metric-card"><small>Failed predictions</small><strong id="eval-failed" class="bad">—</strong></div></section>
+  <section class="card"><div class="section-heading"><div><h2>Confusion matrix</h2><p class="muted">Rows show the actual label; columns show the model prediction.</p></div></div><div class="table-wrap"><table class="evaluation-table"><thead><tr><th>Actual label</th><th>Predicted Normal</th><th>Predicted Defective</th></tr></thead><tbody><tr><th>Normal</th><td id="cm-tn">—</td><td id="cm-fp">—</td></tr><tr><th>Defective</th><td id="cm-fn">—</td><td id="cm-tp">—</td></tr></tbody></table></div></section>
+  <section class="card evaluation-summary"><h2>Evaluation summary</h2><p id="eval-summary" class="muted"></p></section>
+</div>
+{% endblock %}
+{% block scripts %}<script src="{% static 'inspections/model_evaluation.js' %}"></script>{% endblock %}
