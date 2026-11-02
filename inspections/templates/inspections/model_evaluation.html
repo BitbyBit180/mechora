@@ -16,7 +16,7 @@
 <div id="evaluation-results" hidden>
   <section class="metric-grid"><div class="metric-card"><small>Samples evaluated</small><strong id="eval-total">—</strong></div><div class="metric-card"><small>Defect recall</small><strong id="eval-recall" class="good">—</strong></div><div class="metric-card"><small>Accuracy</small><strong id="eval-accuracy" class="good">—</strong></div><div class="metric-card"><small>Failed predictions</small><strong id="eval-failed" class="bad">—</strong></div></section>
   <section class="card"><div class="section-heading"><div><h2>Confusion matrix</h2><p class="muted">Rows show the actual label; columns show the model prediction.</p></div></div><div class="table-wrap"><table class="evaluation-table"><thead><tr><th>Actual label</th><th>Predicted Normal</th><th>Predicted Defective</th></tr></thead><tbody><tr><th>Normal</th><td id="cm-tn">—</td><td id="cm-fp">—</td></tr><tr><th>Defective</th><td id="cm-fn">—</td><td id="cm-tp">—</td></tr></tbody></table></div></section>
-  <section class="card evaluation-summary"><h2>Evaluation summary</h2><p id="eval-summary" class="muted"></p></section>
+  <section class="card evaluation-summary"><h2>Evaluation summary</h2><p id="eval-summary" class="muted"></p><h3>Evaluation limitations</h3><ul id="eval-limitations" class="evaluation-limitations"></ul></section>
 </div>
 {% endblock %}
 {% block scripts %}<script src="{% static 'inspections/model_evaluation.js' %}"></script>{% endblock %}

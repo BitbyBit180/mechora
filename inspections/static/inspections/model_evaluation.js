@@ -17,6 +17,7 @@ async function loadEvaluation(){
     document.querySelector('#cm-fn').textContent=matrix.actual_defective.normal;
     document.querySelector('#cm-tp').textContent=matrix.actual_defective.defective;
     document.querySelector('#eval-summary').textContent=`The classifier processed ${data.processed_samples} of ${data.total_samples} labeled samples with ${data.failed_predictions} failed predictions.`;
+    document.querySelector('#eval-limitations').innerHTML=(data.limitations||[]).map(item=>`<li>${item}</li>`).join('');
     evaluationLoading.hidden=true;evaluationResults.hidden=false;
   }catch(error){evaluationLoading.hidden=true;evaluationError.textContent=error.message;evaluationError.hidden=false;}
 }
