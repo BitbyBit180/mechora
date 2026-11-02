@@ -4,6 +4,7 @@ from django.http import HttpResponseRedirect
 from django.shortcuts import render
 from django.urls import path, reverse
 from django.contrib import messages
+from django.utils import timezone
 from unfold.admin import ModelAdmin
 
 from .models import Inspection, InspectionBatch, InspectionReview
@@ -21,7 +22,7 @@ class InspectionBatchAdmin(ModelAdmin):
 
 @admin.register(Inspection)
 class InspectionAdmin(ModelAdmin):
-    list_display = ("inspection_id", "product", "submitted_by", "assigned_to", "predicted_class", "confidence_score", "status", "created_at")
+    list_display = ("inspection_id", "product", "submitted_by", "assigned_to", "predicted_class", "confidence_score", "status", "submitted_time")
     list_filter = ("status", "predicted_class", "product")
     search_fields = ("inspection_id", "original_filename", "submitted_by__username", "assigned_to__username")
     readonly_fields = (
@@ -33,6 +34,10 @@ class InspectionAdmin(ModelAdmin):
     @admin.display(description="Confidence", ordering="confidence")
     def confidence_score(self, obj):
         return f"{obj.confidence:.1%}" if obj.confidence is not None else "—"
+
+    @admin.display(description="Submitted (IST)", ordering="created_at")
+    def submitted_time(self, obj):
+        return timezone.localtime(obj.created_at).strftime("%d %b %Y, %I:%M %p IST") if obj.created_at else "—"
 
     def get_readonly_fields(self, request, obj=None):
         if obj is None:
