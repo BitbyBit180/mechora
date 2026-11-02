@@ -58,6 +58,8 @@ INSTALLED_APPS = [
     "machines.apps.MachinesConfig",
     "manuals.apps.ManualsConfig",
     "rag.apps.RagConfig",
+    "products.apps.ProductsConfig",
+    "inspections.apps.InspectionsConfig",
 ]
 
 MIDDLEWARE = [
@@ -166,6 +168,15 @@ MAILERS = {
 
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 
+REST_FRAMEWORK = {
+    "DEFAULT_AUTHENTICATION_CLASSES": [
+        "rest_framework.authentication.SessionAuthentication",
+    ],
+    "DEFAULT_PERMISSION_CLASSES": [
+        "rest_framework.permissions.IsAuthenticated",
+    ],
+}
+
 
 # Security & Session Hardening
 # https://docs.djangoproject.com/en/6.1/topics/security/
@@ -248,6 +259,31 @@ UNFOLD = {
                         "icon": "menu_book",
                         "link": reverse_lazy("admin:manuals_manual_changelist"),
                         "permission": "mechora.admin_permissions.can_view_manuals",
+                    },
+                ],
+            },
+            {
+                "title": "AI Quality Inspection",
+                "separator": True,
+                "collapsible": True,
+                "items": [
+                    {
+                        "title": "Product Management",
+                        "icon": "inventory_2",
+                        "link": reverse_lazy("admin:products_product_changelist"),
+                        "permission": "mechora.admin_permissions.can_view_products",
+                    },
+                    {
+                        "title": "Assign Inspections",
+                        "icon": "assignment_ind",
+                        "link": reverse_lazy("admin:inspections_inspection_changelist"),
+                        "permission": "mechora.admin_permissions.can_manage_inspections",
+                    },
+                    {
+                        "title": "Bulk Assign Images",
+                        "icon": "upload_file",
+                        "link": reverse_lazy("admin:inspections_inspection_bulk_upload"),
+                        "permission": "mechora.admin_permissions.can_manage_inspections",
                     },
                 ],
             },
