@@ -1,0 +1,18 @@
+{% extends 'inspections/base.html' %}
+{% load static %}
+{% block title %}Question history · MECHORA{% endblock %}
+{% block body_class %}supervisor-shell{% endblock %}
+{% block role_label %}Supervisor workspace{% endblock %}
+{% block primary_nav %}
+<a class="sidebar-link" href="{% url 'inspections:supervisor' %}"><span>▦</span> Review dashboard</a>
+<a class="sidebar-link active" href="{% url 'inspections:supervisor_questions' %}"><span>✦</span> Question history</a>
+{% endblock %}
+{% block secondary_nav %}
+<a class="sidebar-link" href="{% url 'inspections:supervisor' %}#review-queue"><span>✓</span> Inspection queue</a>
+{% endblock %}
+{% block topbar_context %}Supervisor workspace <span>/</span> Question history{% endblock %}
+{% block content %}
+<div class="page-heading"><div><p class="eyebrow">MANUAL ASSISTANT</p><h1>Question history</h1><p class="muted">Review engineer questions, grounded answers and assistant status.</p></div><a class="quiet-button" href="{% url 'inspections:supervisor' %}">← Review dashboard</a></div>
+<section class="card"><div class="section-heading"><div><p class="eyebrow">ENGINEER ACTIVITY</p><h2>Assistant questions</h2></div><button id="question-refresh" class="quiet-button" type="button">Refresh</button></div><div class="table-wrap"><table><thead><tr><th>Engineer</th><th>Question</th><th>Machine</th><th>Status</th><th>Submitted</th></tr></thead><tbody id="question-history"></tbody></table></div><div class="history-pagination" id="question-pagination"></div></section>
+{% endblock %}
+{% block scripts %}<script src="{% static 'inspections/supervisor_questions.js' %}"></script>{% endblock %}
