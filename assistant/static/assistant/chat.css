@@ -1937,3 +1937,4 @@ button {
     display: none;
   }
 }
+:root{font-family:'Poppins',system-ui,sans-serif}body,.app-shell,.sidebar,.chat-column,.conversation{font-family:'Poppins',system-ui,sans-serif}

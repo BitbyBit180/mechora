@@ -13,8 +13,8 @@ def _role_redirect(user):
     if user.is_superuser or role == ROLE_ADMIN:
         return redirect("admin:index")
     if role == "Supervisor":
-        return redirect("assistant:supervisor_dashboard")
-    return redirect("engineer:machine_library")
+        return redirect("inspections:supervisor")
+    return redirect("inspections:dashboard")
 
 @require_http_methods(["GET", "POST"])
 def login_view(request):

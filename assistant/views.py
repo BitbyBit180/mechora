@@ -169,6 +169,9 @@ def _question_record(item):
 
 @require_GET
 def supervisor_dashboard(request):
+    # Supervisor operations now live in the unified Phase 2 workspace.
+    if request.user.is_authenticated:
+        return redirect("inspections:supervisor")
     if not request.user.is_authenticated:
         return redirect("login")
     if _role_for_user(request.user) != "Supervisor":
@@ -189,6 +192,8 @@ def supervisor_dashboard(request):
 
 @require_GET
 def supervisor_history(request):
+    if request.user.is_authenticated:
+        return redirect("inspections:supervisor")
     if not request.user.is_authenticated:
         return redirect("login")
     if _role_for_user(request.user) != "Supervisor":
@@ -206,6 +211,8 @@ def supervisor_history(request):
 
 @require_GET
 def supervisor_question_detail(request, question_id):
+    if request.user.is_authenticated:
+        return redirect("inspections:supervisor")
     if not request.user.is_authenticated:
         return redirect("login")
     if _role_for_user(request.user) != "Supervisor":
