@@ -1,8 +1,9 @@
 import json
 
+from django.db.models import Count, Q
 from django.http import JsonResponse
-from django.shortcuts import render
-from django.views.decorators.http import require_GET, require_POST
+from django.shortcuts import redirect, render
+from django.views.decorators.http import require_GET, require_POST, require_http_methods
 
 from .models import Question
 from machines.models import Machine
@@ -13,10 +14,26 @@ from rag.pipeline import RAGCitationError, RAGServiceError, answer_question
 @require_GET
 def chat_page(request):
     if not request.user.is_authenticated:
-        from django.shortcuts import redirect
-
         return redirect("login")
-    return render(request, "assistant/chat.html")
+    role = _role_for_user(request.user)
+    if role == "Supervisor":
+        return redirect("assistant:supervisor_dashboard")
+    if role != "Engineer":
+        return redirect("admin:index")
+    machines = list(
+        Machine.objects.filter(manuals__ingestion_status="completed")
+        .distinct()
+        .order_by("machine_id")
+    )
+    is_engineer = _role_for_user(request.user) == "Engineer"
+    return render(
+        request,
+        "assistant/chat.html",
+        {
+            "machines": machines,
+            "is_engineer": is_engineer,
+        },
+    )
 
 
 def _role_for_user(user):
@@ -110,20 +127,154 @@ def ask(request):
 def history(request):
     if not request.user.is_authenticated:
         return JsonResponse({"detail": "Authentication credentials were not provided."}, status=401)
+    if _role_for_user(request.user) != "Engineer":
+        return JsonResponse({"detail": "Engineer role required."}, status=403)
     query = request.GET.get("q", "").strip()
     questions = Question.objects.filter(user=request.user).select_related("machine")
     if query:
-        questions = questions.filter(question_text__icontains=query)
+        questions = questions.filter(
+            Q(question_text__icontains=query) | Q(title__icontains=query)
+        )
     records = [
         {
             "id": item.pk,
+            "title": item.display_title(),
             "question": item.question_text,
             "answer": item.answer_text,
             "status": item.status,
             "machine_id": item.machine.machine_id,
             "citations": item.citations,
+            "is_pinned": item.is_pinned,
             "created_at": item.created_at.isoformat(),
         }
-        for item in questions.order_by("-created_at")[:100]
+        for item in questions.order_by("-is_pinned", "-created_at")[:100]
     ]
     return JsonResponse({"history": records})
+
+
+def _question_record(item):
+    return {
+        "id": item.pk,
+        "title": item.display_title(),
+        "question": item.question_text,
+        "answer": item.answer_text,
+        "status": item.status,
+        "machine_id": item.machine.machine_id,
+        "machine_name": item.machine.machine_name,
+        "engineer": item.user.get_username(),
+        "citations": item.citations,
+        "created_at": item.created_at.isoformat(),
+    }
+
+
+@require_GET
+def supervisor_dashboard(request):
+    if not request.user.is_authenticated:
+        return redirect("login")
+    if _role_for_user(request.user) != "Supervisor":
+        return JsonResponse({"detail": "Supervisor role required."}, status=403)
+    status = request.GET.get("status", "").strip().upper()
+    questions = Question.objects.select_related("user", "machine").order_by("-created_at")
+    if status in {choice[0] for choice in Question.Status.choices}:
+        questions = questions.filter(status=status)
+    return render(
+        request,
+        "assistant/supervisor_dashboard.html",
+        {"questions": questions[:200], "selected_status": status},
+    )
+
+
+@require_GET
+def supervisor_question_detail(request, question_id):
+    if not request.user.is_authenticated:
+        return redirect("login")
+    if _role_for_user(request.user) != "Supervisor":
+        return JsonResponse({"detail": "Supervisor role required."}, status=403)
+    try:
+        question = Question.objects.select_related("user", "machine").get(pk=question_id)
+    except Question.DoesNotExist:
+        return JsonResponse({"detail": "Question not found."}, status=404)
+    return render(request, "assistant/supervisor_detail.html", {"question": question})
+
+
+@require_GET
+def history_all(request):
+    if not request.user.is_authenticated:
+        return JsonResponse({"detail": "Authentication credentials were not provided."}, status=401)
+    if _role_for_user(request.user) != "Supervisor":
+        return JsonResponse({"detail": "Supervisor role required."}, status=403)
+    status = request.GET.get("status", "").strip().upper()
+    questions = Question.objects.select_related("user", "machine").order_by("-created_at")
+    if status in {choice[0] for choice in Question.Status.choices}:
+        questions = questions.filter(status=status)
+    return JsonResponse({"history": [_question_record(item) for item in questions[:200]]})
+
+
+@require_GET
+def history_detail(request, question_id):
+    if not request.user.is_authenticated:
+        return JsonResponse({"detail": "Authentication credentials were not provided."}, status=401)
+    try:
+        question = Question.objects.select_related("user", "machine").get(pk=question_id)
+    except Question.DoesNotExist:
+        return JsonResponse({"detail": "Question not found."}, status=404)
+    role = _role_for_user(request.user)
+    if role == "Engineer" and question.user_id != request.user.id:
+        return JsonResponse({"detail": "You can only view your own history."}, status=403)
+    if role not in {"Engineer", "Supervisor"}:
+        return JsonResponse({"detail": "Engineer or Supervisor role required."}, status=403)
+    return JsonResponse(_question_record(question))
+
+
+@require_POST
+def rename_chat(request, question_id):
+    if not request.user.is_authenticated:
+        return JsonResponse({"detail": "Authentication credentials were not provided."}, status=401)
+    if _role_for_user(request.user) != "Engineer":
+        return JsonResponse({"detail": "Engineer role required."}, status=403)
+    try:
+        question = Question.objects.get(pk=question_id, user=request.user)
+    except Question.DoesNotExist:
+        return JsonResponse({"detail": "Chat not found."}, status=404)
+    try:
+        payload = _parse_json(request)
+        title = str(payload.get("title", "")).strip()
+        if not title:
+            return JsonResponse({"detail": "Title cannot be empty."}, status=400)
+    except ValueError as exc:
+        return JsonResponse({"detail": str(exc)}, status=400)
+
+    question.title = title
+    question.save(update_fields=["title"])
+    return JsonResponse({"id": question.pk, "title": question.display_title(), "status": "success"})
+
+
+@require_http_methods(["DELETE", "POST"])
+def delete_chat(request, question_id):
+    if not request.user.is_authenticated:
+        return JsonResponse({"detail": "Authentication credentials were not provided."}, status=401)
+    if _role_for_user(request.user) != "Engineer":
+        return JsonResponse({"detail": "Engineer role required."}, status=403)
+    try:
+        question = Question.objects.get(pk=question_id, user=request.user)
+    except Question.DoesNotExist:
+        return JsonResponse({"detail": "Chat not found."}, status=404)
+
+    question.delete()
+    return JsonResponse({"id": question_id, "status": "deleted"})
+
+
+@require_POST
+def pin_chat(request, question_id):
+    if not request.user.is_authenticated:
+        return JsonResponse({"detail": "Authentication credentials were not provided."}, status=401)
+    if _role_for_user(request.user) != "Engineer":
+        return JsonResponse({"detail": "Engineer role required."}, status=403)
+    try:
+        question = Question.objects.get(pk=question_id, user=request.user)
+    except Question.DoesNotExist:
+        return JsonResponse({"detail": "Chat not found."}, status=404)
+
+    question.is_pinned = not question.is_pinned
+    question.save(update_fields=["is_pinned"])
+    return JsonResponse({"id": question.pk, "is_pinned": question.is_pinned, "status": "success"})

@@ -2,6 +2,7 @@
 URL configuration for mechora project.
 
 Routes:
+- / : Role-based Engineer/Supervisor sign-in page
 - /admin/ : Django Unfold Administration and Authentication Portal
 """
 
@@ -13,19 +14,21 @@ from django.urls import include, path
 
 
 def root_redirect(request):
-    """Convenience redirect from root to admin panel."""
-    return redirect("admin:index")
+    """Make the role-based sign-in screen the public landing page."""
+    return redirect("login")
 
 
 urlpatterns = [
     path("", root_redirect, name="root_redirect"),
     path("admin/", admin.site.urls),
     path("accounts/", include("accounts.urls")),
+    path("api/auth/", include("accounts.api_urls")),
     path("assistant/", include("assistant.urls")),
+    path("engineer/", include("machines.urls")),
+    path("api/machines/", include("machines.api_urls")),
     path("api/assistant/", include("assistant.api_urls")),
     path("api/manuals/", include("manuals.urls")),
 ]
 
 if settings.DEBUG:
-    urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
     urlpatterns += static(settings.STATIC_URL, document_root=settings.STATIC_ROOT)
