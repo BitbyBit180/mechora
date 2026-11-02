@@ -28,6 +28,7 @@ from machines.models import Machine
 from manuals.models import Manual
 from rag.models import RAGQueryLog
 from mechora.admin_dashboard import dashboard_callback
+from accounts.models import UserProfile
 
 User = get_user_model()
 
@@ -335,3 +336,40 @@ class MechoraRoleBasedUserManagementTests(TestCase):
         self.assertTrue(Machine.objects.filter(machine_id="M-HP200").exists())
         self.assertTrue(Manual.objects.filter(document_id="HP-OPS-01").exists())
         self.assertTrue(RAGQueryLog.objects.filter(machine=self.machine).exists())
+
+
+class PublicAuthenticationTests(TestCase):
+    def setUp(self):
+        ensure_roles_and_permissions()
+        self.user = User.objects.create_user("supervisor_one", password="StrongPass#2026!")
+        assign_user_role(self.user, ROLE_SUPERVISOR)
+
+    def test_signup_creates_selected_operational_role(self):
+        response = self.client.post(
+            reverse("signup"),
+            {
+                "username": "new_engineer",
+                "email": "engineer@example.com",
+                "first_name": "New",
+                "last_name": "Engineer",
+                "role": ROLE_ENGINEER,
+                "password1": "StrongPass#2026!",
+                "password2": "StrongPass#2026!",
+            },
+        )
+        self.assertRedirects(response, reverse("assistant:chat"))
+        created = User.objects.get(username="new_engineer")
+        self.assertEqual(get_user_role(created), ROLE_ENGINEER)
+        self.assertEqual(created.profile.role, UserProfile.Role.ENGINEER)
+
+    def test_signin_rejects_a_mismatched_role(self):
+        response = self.client.post(
+            reverse("signin"),
+            {
+                "username": self.user.username,
+                "password": "StrongPass#2026!",
+                "role": ROLE_ENGINEER,
+            },
+        )
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, "selected role does not match")
