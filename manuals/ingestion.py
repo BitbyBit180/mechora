@@ -73,6 +73,40 @@ def ingest_manual(
         if records:
             vector_store.upsert_chunks(records)
 
+        # Keep Django's auditable chunk table in sync with the vector index.
+        # Chroma is used for retrieval; this relational copy powers the Admin
+        # panel and preserves the exact page/chunk metadata for inspection.
+        try:
+            from rag.models import RAGDocumentChunk
+            from .models import Manual
+
+            manual_record = Manual.objects.filter(pk=manual_id).first()
+            if manual_record is not None:
+                page_indexes: dict[int, int] = {}
+                expected_keys: set[tuple[int, int]] = set()
+                for chunk in chunks:
+                    page_indexes[chunk.page_number] = page_indexes.get(chunk.page_number, 0) + 1
+                    chunk_index = page_indexes[chunk.page_number]
+                    expected_keys.add((chunk.page_number, chunk_index))
+                    RAGDocumentChunk.objects.update_or_create(
+                        manual=manual_record,
+                        page_number=chunk.page_number,
+                        chunk_index=chunk_index,
+                        defaults={
+                            "machine": manual_record.machine,
+                            "passage_id": chunk.chunk_id,
+                            "chunk_text": chunk.text,
+                        },
+                    )
+
+                # Remove stale rows if a later extraction produces fewer
+                # chunks on a page, keeping Admin truthful after re-ingestion.
+                for stored in RAGDocumentChunk.objects.filter(manual=manual_record):
+                    if (stored.page_number, stored.chunk_index) not in expected_keys:
+                        stored.delete()
+        except Exception as exc:
+            raise IngestionError(f"Unable to persist Django chunk records: {exc}") from exc
+
         return {
             "status": "complete",
             "pages_extracted": len(pages),
