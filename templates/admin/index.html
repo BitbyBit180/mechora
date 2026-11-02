@@ -1,0 +1,29 @@
+{% extends 'admin/base.html' %}
+{% load i18n %}
+
+{% block title %}{% if subtitle %}{{ subtitle }} | {% endif %}{{ title }} | {{ site_title|default:_('Django site admin') }}{% endblock %}
+
+{% block branding %}
+    {% include "unfold/helpers/site_branding.html" %}
+{% endblock %}
+
+{% block content %}
+    {% if kpi_metrics %}
+    <div class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4 mb-6">
+        {% for metric in kpi_metrics %}
+        <a href="{{ metric.link }}" class="bg-white dark:bg-base-900 border border-base-200 dark:border-base-800 rounded-default p-5 shadow-xs flex flex-col justify-between hover:border-primary-500 dark:hover:border-primary-500 transition-all group">
+            <div class="flex items-center justify-between mb-3">
+                <span class="text-xs font-semibold uppercase tracking-wider text-font-subtle-light dark:text-font-subtle-dark">{{ metric.title }}</span>
+                <span class="material-symbols-outlined text-primary-600 dark:text-primary-500 text-2xl group-hover:scale-110 transition-transform">{{ metric.icon }}</span>
+            </div>
+            <div>
+                <div class="text-3xl font-bold text-font-important-light dark:text-font-important-dark mb-1">{{ metric.value }}</div>
+                <div class="text-xs text-font-subtle-light dark:text-font-subtle-dark">{{ metric.description }}</div>
+            </div>
+        </a>
+        {% endfor %}
+    </div>
+    {% endif %}
+
+    {% include "unfold/helpers/dashboard_default.html" %}
+{% endblock %}
