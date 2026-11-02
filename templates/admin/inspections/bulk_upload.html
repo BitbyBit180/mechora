@@ -1,0 +1,40 @@
+{% extends "admin/base_site.html" %}
+{% load i18n %}
+
+{% block extrastyle %}
+{{ block.super }}
+<style>
+.bulk-page{max-width:1080px}.bulk-hero{display:flex;justify-content:space-between;align-items:flex-start;gap:24px;margin-bottom:24px}.bulk-kicker{font-size:11px;letter-spacing:.14em;font-weight:800;color:#668075;margin-bottom:7px}.bulk-hero h1{margin:0;font-size:30px}.bulk-hero p{max-width:650px;color:#66736d;margin:8px 0 0}.bulk-badge{background:#e6f2e8;color:#236b4d;border-radius:999px;padding:8px 12px;font-size:12px;font-weight:800;white-space:nowrap}.bulk-card{background:#fff;border:1px solid #dfe7e0;border-radius:14px;padding:26px;box-shadow:0 5px 18px #1633260b}.bulk-grid{display:grid;grid-template-columns:1fr 1fr;gap:22px}.bulk-field{margin-bottom:22px}.bulk-field label{display:block;font-weight:800;font-size:13px;margin-bottom:7px}.bulk-field select{display:block;width:100%;padding:12px;border:1px solid #c9d6cd;border-radius:8px;background:#fff;font-size:14px}.bulk-help{font-size:12px;color:#718178;margin:7px 0 0}.bulk-upload{border:2px dashed #a8c3ae;background:#f5faf5;border-radius:12px;padding:27px 20px;text-align:center;cursor:pointer;min-height:190px;display:flex;flex-direction:column;justify-content:center;align-items:center}.bulk-upload:hover,.bulk-upload.dragging{border-color:#236b4d;background:#edf7ef}.bulk-upload-icon{font-size:34px;color:#236b4d;line-height:1}.bulk-upload strong{display:block;margin-top:8px;color:#234c35}.bulk-upload span{font-size:12px;color:#718178;margin-top:5px}.bulk-upload input{display:none}.bulk-files{margin-top:12px;display:grid;gap:6px}.bulk-file{display:flex;justify-content:space-between;padding:8px 10px;background:#f1f5f1;border-radius:6px;font-size:12px}.bulk-file small{color:#718178}.bulk-rules{display:grid;grid-template-columns:repeat(2,1fr);gap:8px;margin-top:16px}.bulk-rule{font-size:12px;color:#52655a;background:#f5f7f5;padding:9px;border-radius:7px}.bulk-footer{border-top:1px solid #e4eae5;margin-top:24px;padding-top:20px;display:flex;justify-content:flex-end;align-items:center;gap:14px}.bulk-cancel{color:#52655a;text-decoration:none;font-size:13px}.bulk-submit{border:0;border-radius:8px;background:#236b4d;color:#fff;padding:12px 18px;font-weight:800;cursor:pointer}.bulk-submit:hover{background:#1b583d}@media(max-width:760px){.bulk-hero{display:block}.bulk-badge{display:inline-block;margin-top:16px}.bulk-grid{grid-template-columns:1fr}.bulk-card{padding:18px}}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="bulk-page">
+  <div class="bulk-hero">
+    <div><div class="bulk-kicker">AI QUALITY INSPECTION</div><h1>Bulk Assign Inspections</h1><p>Send a batch of product images to an Engineer. Every image becomes an independent inspection and is processed separately.</p></div>
+    <div class="bulk-badge">Administrator only</div>
+  </div>
+  <form method="post" enctype="multipart/form-data" id="bulk-form">
+    {% csrf_token %}
+    <div class="bulk-card">
+      <div class="bulk-grid">
+        <div>
+          <div class="bulk-field"><label for="product_id">Product</label><select id="product_id" name="product_id" required><option value="">Choose an active product</option>{% for product in products %}<option value="{{ product.pk }}">{{ product.product_code }} — {{ product.name }}</option>{% endfor %}</select><p class="bulk-help">All images in this batch will use the selected product.</p></div>
+          <div class="bulk-field"><label for="assigned_to">Assign to Engineer</label><select id="assigned_to" name="assigned_to" required><option value="">Choose an Engineer</option>{% for engineer in engineers %}<option value="{{ engineer.pk }}">{{ engineer.get_full_name|default:engineer.username }} ({{ engineer.username }})</option>{% endfor %}</select><p class="bulk-help">The assigned Engineer will see these images in their workspace.</p></div>
+          <div class="bulk-rules"><div class="bulk-rule">✓ JPEG or PNG</div><div class="bulk-rule">✓ 1–10 images</div><div class="bulk-rule">✓ Maximum 5 MiB each</div><div class="bulk-rule">✓ 64–4096 pixels</div></div>
+        </div>
+        <div>
+          <label class="bulk-upload" id="bulk-drop" for="images"><div class="bulk-upload-icon">↑</div><strong>Choose inspection images</strong><span>Click to browse or drag files here</span><input id="images" name="images" type="file" accept="image/jpeg,image/png" multiple required></label>
+          <div class="bulk-files" id="bulk-files"><p class="bulk-help">No files selected</p></div>
+        </div>
+      </div>
+      <div class="bulk-footer"><a class="bulk-cancel" href="{% url 'admin:inspections_inspection_changelist' %}">Cancel</a><button class="bulk-submit" type="submit">Create assigned inspections →</button></div>
+    </div>
+  </form>
+</div>
+<script>
+const input=document.querySelector('#images'),drop=document.querySelector('#bulk-drop'),filesBox=document.querySelector('#bulk-files');
+function showFiles(){const files=[...input.files];if(!files.length){filesBox.innerHTML='<p class="bulk-help">No files selected</p>';return}filesBox.innerHTML=files.map(file=>`<div class="bulk-file"><span>${file.name}</span><small>${(file.size/1024/1024).toFixed(2)} MiB</small></div>`).join('')}
+input.addEventListener('change',showFiles);['dragenter','dragover'].forEach(event=>drop.addEventListener(event,e=>{e.preventDefault();drop.classList.add('dragging')}));['dragleave','drop'].forEach(event=>drop.addEventListener(event,e=>{e.preventDefault();drop.classList.remove('dragging')}));drop.addEventListener('drop',e=>{input.files=e.dataTransfer.files;showFiles()});document.querySelector('#bulk-form').addEventListener('submit',e=>{if(input.files.length<1||input.files.length>10){e.preventDefault();alert('Please choose between 1 and 10 images.')}});
+</script>
+{% endblock %}
