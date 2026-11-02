@@ -1,0 +1,43 @@
+{% load static %}
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="theme-color" content="#10263f">
+  <title>Sign in · MECHORA</title>
+  <link rel="stylesheet" href="{% static 'accounts/css/auth.css' %}?v=2">
+</head>
+<body class="login-body">
+  <div id="app" class="sign-in-page">
+    <a class="sign-in-brand" href="{% url 'signin' %}"><span class="sign-in-brand-mark">M</span> MECHORA</a>
+    <main class="sign-in-card">
+      <span class="sign-in-kicker">Secure access</span>
+      <h1>Sign in</h1>
+      <p class="sign-in-subtitle">Use your MECHORA account to continue.</p>
+      <div class="role-tabs" data-role-tabs>
+        <button class="role-tab selected" type="button" data-role="Engineer">Engineer</button>
+        <button class="role-tab" type="button" data-role="Supervisor">Supervisor</button>
+        <button class="role-tab" type="button" data-role="Admin">Admin</button>
+      </div>
+      <form method="post" novalidate>
+        {% csrf_token %}
+        {{ form.role }}
+        {{ form.non_field_errors }}
+        <div class="sign-in-field"><label for="id_username">Username</label>{{ form.username }}{{ form.username.errors }}</div>
+        <div class="sign-in-field"><label for="id_password">Password</label><div class="sign-in-password">{{ form.password }}<button type="button" data-password-toggle>Show</button></div>{{ form.password.errors }}</div>
+        <button class="sign-in-submit" type="submit">Sign in <span aria-hidden="true">→</span></button>
+      </form>
+    </main>
+    <footer class="sign-in-footer">© MECHORA · Manufacturing intelligence</footer>
+  </div>
+  <script>
+    (() => {
+      const roleInput = document.querySelector("#id_role");
+      document.querySelectorAll("[data-role-tabs] .role-tab").forEach((tab) => tab.addEventListener("click", () => { roleInput.value = tab.dataset.role; document.querySelectorAll("[data-role-tabs] .role-tab").forEach((item) => item.classList.toggle("selected", item === tab)); }));
+      const password = document.querySelector("#id_password"); const toggle = document.querySelector("[data-password-toggle]");
+      toggle?.addEventListener("click", () => { password.type = password.type === "password" ? "text" : "password"; toggle.textContent = password.type === "password" ? "Show" : "Hide"; });
+    })();
+  </script>
+</body>
+</html>
