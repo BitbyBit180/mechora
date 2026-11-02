@@ -52,3 +52,59 @@ class AskEndpointTests(TestCase):
         response = self.client.get("/assistant/")
         self.assertEqual(response.status_code, 200)
         self.assertContains(response, "Manufacturing Manual Assistant")
+
+    def test_rename_chat(self):
+        q = Question.objects.create(
+            user=self.user,
+            machine=self.machine,
+            question_text="Original question text",
+            status=Question.Status.ANSWERED,
+        )
+        response = self.client.post(
+            f"/api/assistant/history/{q.pk}/rename/",
+            {"title": "Renamed Title"},
+            content_type="application/json",
+        )
+        self.assertEqual(response.status_code, 200)
+        q.refresh_from_db()
+        self.assertEqual(q.title, "Renamed Title")
+        self.assertEqual(q.display_title(), "Renamed Title")
+
+    def test_delete_chat(self):
+        q = Question.objects.create(
+            user=self.user,
+            machine=self.machine,
+            question_text="To be deleted",
+            status=Question.Status.ANSWERED,
+        )
+        response = self.client.delete(f"/api/assistant/history/{q.pk}/delete/")
+        self.assertEqual(response.status_code, 200)
+        self.assertFalse(Question.objects.filter(pk=q.pk).exists())
+
+    def test_pin_chat(self):
+        q = Question.objects.create(
+            user=self.user,
+            machine=self.machine,
+            question_text="Pin question",
+            status=Question.Status.ANSWERED,
+        )
+        response = self.client.post(f"/api/assistant/history/{q.pk}/pin/")
+        self.assertEqual(response.status_code, 200)
+        q.refresh_from_db()
+        self.assertTrue(q.is_pinned)
+
+    def test_history_returns_pinned_and_custom_title(self):
+        q1 = Question.objects.create(
+            user=self.user,
+            machine=self.machine,
+            question_text="First question",
+            title="Custom Name",
+            status=Question.Status.ANSWERED,
+            is_pinned=True,
+        )
+        response = self.client.get("/api/assistant/history/")
+        self.assertEqual(response.status_code, 200)
+        history_items = response.json()["history"]
+        self.assertEqual(len(history_items), 1)
+        self.assertEqual(history_items[0]["title"], "Custom Name")
+        self.assertTrue(history_items[0]["is_pinned"])
