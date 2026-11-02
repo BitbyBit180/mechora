@@ -1,0 +1,19 @@
+{% extends 'inspections/base.html' %}
+{% load static %}
+{% block title %}Supervisor workspace · MECHORA{% endblock %}
+{% block body_class %}supervisor-shell{% endblock %}
+{% block role_label %}Supervisor workspace{% endblock %}
+{% block primary_nav %}
+<a class="sidebar-link active" href="{% url 'inspections:supervisor' %}"><span>▦</span> Review dashboard</a>
+<a class="sidebar-link" href="{% url 'inspections:supervisor_questions' %}"><span>✦</span> Question history</a>
+{% endblock %}
+{% block secondary_nav %}
+{% endblock %}
+{% block topbar_context %}Supervisor workspace <span>/</span> Inspection review{% endblock %}
+{% block content %}
+<div class="page-heading"><div><p class="eyebrow">SUPERVISOR WORKSPACE</p><h1>Inspection review</h1><p class="muted">Review AI results across all engineer submissions.</p></div><span class="role-pill">Supervisor access</span></div>
+<section class="metric-grid"><div class="metric-card"><small>Total inspections</small><strong id="stat-total">—</strong></div><div class="metric-card"><small>Awaiting review</small><strong id="stat-pending" class="attention">—</strong></div><div class="metric-card"><small>Confirmed</small><strong id="stat-confirmed" class="good">—</strong></div><div class="metric-card"><small>Corrected</small><strong id="stat-corrected" class="bad">—</strong></div></section>
+<section class="card" id="review-queue"><div class="section-heading"><div><p class="eyebrow">SUPERVISOR ACTIONS</p><h2>Review queue</h2><p class="muted">Open completed inspections to confirm or correct the AI prediction.</p></div><button id="refresh" class="quiet-button" type="button">Refresh</button></div><div class="table-wrap"><table><thead><tr><th>Inspection</th><th>Engineer</th><th>Product</th><th>AI prediction</th><th>Status</th><th>Review</th><th>Action</th></tr></thead><tbody id="history"></tbody></table></div><div class="history-pagination" id="inspection-pagination"></div></section>
+<div class="review-modal" id="review-modal" hidden><div class="review-backdrop" data-close-review></div><section class="review-panel" role="dialog" aria-modal="true" aria-labelledby="review-title"><button class="review-close" type="button" data-close-review aria-label="Close review">×</button><div class="review-panel-header"><p class="eyebrow">SUPERVISOR REVIEW</p><h2 id="review-title">Review inspection</h2><p class="muted" id="review-id"></p></div><div class="review-grid"><div class="review-image-wrap"><img id="review-image" alt="Inspection image"><p id="review-image-empty" class="muted">Image preview unavailable.</p></div><div class="review-form"><div class="original-result"><span>Original AI prediction</span><strong id="review-original">—</strong></div><fieldset><legend>Supervisor decision</legend><label class="decision-option"><input type="radio" name="reviewed_class" value="Normal"><span>Normal</span></label><label class="decision-option"><input type="radio" name="reviewed_class" value="Defective"><span>Defective</span></label></fieldset><label class="comment-label" for="review-comment">Review comment <span>Optional</span></label><textarea id="review-comment" rows="4" placeholder="Explain the confirmation or correction..."></textarea><p id="review-error" class="review-error" role="alert"></p><p id="review-success" class="review-success" role="status"></p><div class="review-actions"><button class="quiet-button" type="button" data-close-review>Cancel</button><button id="save-review" type="button">Save review</button></div></div></div></section></div>
+{% endblock %}
+{% block scripts %}<script src="{% static 'inspections/supervisor_dashboard.js' %}"></script>{% endblock %}
