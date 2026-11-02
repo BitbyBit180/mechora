@@ -21,7 +21,7 @@ class InspectionBatchAdmin(ModelAdmin):
 
 @admin.register(Inspection)
 class InspectionAdmin(ModelAdmin):
-    list_display = ("inspection_id", "product", "submitted_by", "assigned_to", "predicted_class", "status", "created_at")
+    list_display = ("inspection_id", "product", "submitted_by", "assigned_to", "predicted_class", "confidence_score", "status", "created_at")
     list_filter = ("status", "predicted_class", "product")
     search_fields = ("inspection_id", "original_filename", "submitted_by__username", "assigned_to__username")
     readonly_fields = (
@@ -29,6 +29,10 @@ class InspectionAdmin(ModelAdmin):
         "predicted_class", "confidence", "defect_probability", "model_version", "status",
         "failure_reason", "created_at", "completed_at",
     )
+
+    @admin.display(description="Confidence", ordering="confidence")
+    def confidence_score(self, obj):
+        return f"{obj.confidence:.1%}" if obj.confidence is not None else "—"
 
     def get_readonly_fields(self, request, obj=None):
         if obj is None:
