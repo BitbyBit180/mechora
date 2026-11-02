@@ -24,7 +24,7 @@
     <div class="sidebar-footer"><a class="sidebar-link logout" href="{% url 'logout' %}"><span>↪</span> Sign out</a><small>Phase 2 · AI inspection</small></div>
   </aside>
   <div class="app-main">
-    <header class="app-topbar"><button class="menu-toggle" id="menu-toggle" type="button" aria-label="Open navigation">☰</button><div class="topbar-context">{% block topbar_context %}Visual quality inspection{% endblock %}</div><div class="topbar-status"><span class="status-dot"></span> System online</div></header>
+    <header class="app-topbar"><button class="menu-toggle" id="menu-toggle" type="button" aria-label="Open navigation">☰</button><div class="topbar-context">{% block topbar_context %}Visual quality inspection{% endblock %}</div></header>
     <main class="app-content">{% block content %}{% endblock %}</main>
   </div>
   <script>
