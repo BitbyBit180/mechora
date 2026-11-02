@@ -1,6 +1,6 @@
 from unittest import TestCase
 
-from rag.generator import CitationValidationError, validate_response
+from rag.generator import CitationValidationError, citations_for_sources, validate_response
 from rag.pipeline import answer_question
 from rag.retriever import RetrievedChunk, Retriever
 
@@ -61,3 +61,17 @@ class IsolationAndEvidenceTests(TestCase):
         )
         self.assertEqual(result["status"], "INSUFFICIENT")
         self.assertEqual(result["sources"], [])
+
+    def test_duplicate_chunks_on_same_page_collapse_to_one_citation(self):
+        chunks = [
+            RetrievedChunk("S1", "chunk-1", "M-HP200", 1, "hp.pdf", "1.0", 2, "first", 0.1),
+            RetrievedChunk("S2", "chunk-2", "M-HP200", 1, "hp.pdf", "1.0", 2, "duplicate page", 0.2),
+        ]
+        result = validate_response(
+            {"status": "ANSWERED", "answer": "The value is [S2].", "used_sources": ["S1", "S2"]},
+            chunks,
+            machine_id="M-HP200",
+        )
+        self.assertEqual(result["used_sources"], ["S1"])
+        self.assertIn("[S1]", result["answer"])
+        self.assertEqual(len(citations_for_sources(result["used_sources"], chunks)), 1)

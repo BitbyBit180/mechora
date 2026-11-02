@@ -1,0 +1,22 @@
+/* Evidence panel: one scrollbar for the complete right column. */
+.evidence-panel {
+  min-height: 0;
+  height: 100%;
+  overflow-x: hidden;
+  overflow-y: auto;
+  scrollbar-width: thin;
+  scrollbar-color: #aeb9c6 #f3f5f7;
+}
+
+.evidence-panel::-webkit-scrollbar { width: 9px; }
+.evidence-panel::-webkit-scrollbar-track { background: #f3f5f7; }
+.evidence-panel::-webkit-scrollbar-thumb { border-radius: 8px; background: #aeb9c6; }
+.evidence-panel::-webkit-scrollbar-thumb:hover { background: #8e9baa; }
+.evidence-panel .citations { overflow: visible; flex: 0 0 auto; }
+.evidence-panel .pdf-viewer { flex: 0 0 560px; min-height: 560px; }
+.citation-pages { display: flex; flex-wrap: wrap; gap: 5px; margin-top: 8px; }
+.citation-page-button { padding: 3px 7px; border: 1px solid #c9d8f5; border-radius: 10px; color: #2563eb; background: #f5f8ff; font-size: 10px; cursor: pointer; }
+.citation-page-button:hover { border-color: #2563eb; background: #e8f0ff; }
+@media (max-width: 700px) {
+  .evidence-panel .pdf-viewer { flex-basis: 70vh; min-height: 520px; }
+}

@@ -51,20 +51,41 @@ class Command(BaseCommand):
             "HP200_Maintenance_Rev1_0.pdf": "HP-MNT-01",
             "AC90_Operations_Maintenance_Rev1_0.pdf": "AC-OM-01",
         }
-        manual, created = Manual.objects.get_or_create(
+        document_id = document_ids[document_name]
+        # Prefer an existing exact machine/filename/revision record. The seed
+        # command may have registered the same PDF with a human-readable title,
+        # while an earlier ingestion may already have registered the filename.
+        # Resolve both forms before creating anything to avoid either unique
+        # constraint (document_id or machine/document_name/revision).
+        manual = Manual.objects.filter(
             machine=machine,
             document_name=document_name,
             revision="1.0",
-            defaults={
-                "document_id": document_ids[document_name],
-                "pdf_filename": document_name,
-                "ingestion_status": Manual.IngestionStatus.PENDING,
-            },
-        )
+        ).first()
+        if manual is None:
+            manual = Manual.objects.filter(document_id=document_id).first()
+        created = False
+        if manual is None:
+            manual, created = Manual.objects.get_or_create(
+                machine=machine,
+                document_name=document_name,
+                revision="1.0",
+                defaults={
+                    "document_id": document_id,
+                    "pdf_filename": document_name,
+                    "ingestion_status": Manual.IngestionStatus.PENDING,
+                },
+            )
+        manual.machine = machine
+        if not manual.document_id:
+            manual.document_id = document_id
+        manual.document_name = document_name
+        manual.revision = "1.0"
+        manual.pdf_filename = document_name
+        manual.ingestion_status = Manual.IngestionStatus.PENDING
         if created or not manual.file:
             with pdf_path.open("rb") as source:
                 manual.file.save(document_name, File(source), save=False)
-        manual.ingestion_status = Manual.IngestionStatus.PENDING
         manual.save()
 
         result = ingest_manual(

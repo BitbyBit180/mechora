@@ -1,11 +1,13 @@
 import json
 
 from django.db import IntegrityError
+from django.db.models import Prefetch
 from django.http import HttpResponseForbidden, JsonResponse
 from django.shortcuts import get_object_or_404, redirect, render
 from django.views.decorators.http import require_GET, require_http_methods
 
 from accounts.roles import ROLE_ENGINEER, get_user_role
+from manuals.models import Manual
 
 from .models import Machine
 
@@ -81,5 +83,31 @@ def machine_manuals(request, machine_id):
         "machines/manuals.html",
         {"machine": machine, "manuals": manuals},
     )
+
+
+@require_GET
+def machine_library(request):
+    """Engineer landing page listing every machine with available manuals."""
+
+    if not request.user.is_authenticated:
+        return redirect("signin")
+    if get_user_role(request.user) != ROLE_ENGINEER:
+        return HttpResponseForbidden("Engineer role required.")
+
+    machines = (
+        Machine.objects.filter(manuals__ingestion_status="completed")
+        .prefetch_related(
+            Prefetch(
+                "manuals",
+                queryset=Manual.objects.filter(ingestion_status="completed").order_by(
+                    "-uploaded_at"
+                ),
+                to_attr="completed_manuals",
+            )
+        )
+        .distinct()
+        .order_by("machine_id")
+    )
+    return render(request, "machines/library.html", {"machines": machines})
 
 # Create your views here.

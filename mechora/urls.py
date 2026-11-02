@@ -13,6 +13,7 @@ from django.shortcuts import redirect
 from django.urls import include, path
 
 
+
 def root_redirect(request):
     """Make the role-based sign-in screen the public landing page."""
     return redirect("login")

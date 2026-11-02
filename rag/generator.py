@@ -108,10 +108,35 @@ def validate_response(
             # trusted IDs server-side rather than rejecting a grounded answer.
             answer = f"{answer.rstrip()} {' '.join(f'[{source_id}]' for source_id in missing_inline)}"
 
+    # Multiple retrieved chunks can come from the same manual page. Keep one
+    # citation for that physical evidence location and rewrite the model's
+    # inline markers to the surviving trusted source ID.
+    canonical_by_location: dict[tuple[Any, ...], str] = {}
+    canonical_by_source: dict[str, str] = {}
+    normalized_sources: list[str] = []
+    for source_id in used_sources:
+        chunk = source_map[source_id]
+        location = (
+            str(chunk.manual_id),
+            str(chunk.document_name),
+            str(chunk.revision),
+            int(chunk.page_number),
+        )
+        canonical_id = canonical_by_location.setdefault(location, source_id)
+        canonical_by_source[source_id] = canonical_id
+        if canonical_id not in normalized_sources:
+            normalized_sources.append(canonical_id)
+
+    answer = re.sub(
+        r"\[(S\d+)\]",
+        lambda match: f"[{canonical_by_source.get(match.group(1), match.group(1))}]",
+        answer,
+    )
+
     return {
         "status": response["status"],
         "answer": answer.strip(),
-        "used_sources": list(dict.fromkeys(used_sources)),
+        "used_sources": normalized_sources,
     }
 
 
@@ -122,10 +147,20 @@ def citations_for_sources(
 
     source_map = {chunk.source_id: chunk for chunk in retrieved_chunks}
     citations = []
+    seen_locations: set[tuple[Any, ...]] = set()
     for source_id in used_sources:
         chunk = source_map.get(source_id)
         if chunk is None:
             raise CitationValidationError(f"Unknown source ID: {source_id}")
+        location = (
+            str(chunk.manual_id),
+            str(chunk.document_name),
+            str(chunk.revision),
+            int(chunk.page_number),
+        )
+        if location in seen_locations:
+            continue
+        seen_locations.add(location)
         citations.append(
             {
                 "source_id": chunk.source_id,
@@ -184,13 +219,18 @@ class OpenRouterGenerator:
             try:
                 raw = self._generate_once(question, chunks)
                 return validate_response(raw, chunks, machine_id=machine_id)
-            except CitationValidationError:
-                raise
-            except LLMAPIError as exc:
+            except (CitationValidationError, LLMAPIError) as exc:
                 last_error = exc
                 if attempt >= self.max_retries:
                     break
+                # Free OpenRouter models can occasionally return malformed JSON
+                # or omit citation markers even when the provider request itself
+                # succeeded. Retry those transient model-format failures just
+                # like transport failures, while still rejecting the final
+                # result if it cannot be validated server-side.
                 time.sleep(self.backoff_seconds * (2**attempt))
+        if isinstance(last_error, CitationValidationError):
+            raise last_error
         raise LLMAPIError(f"OpenRouter generation request failed: {last_error}") from last_error
 
 

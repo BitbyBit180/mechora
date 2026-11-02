@@ -1,0 +1,18 @@
+{% load static %}
+<!doctype html>
+<html lang="en">
+<head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Question history · MECHORA</title><link rel="stylesheet" href="{% static 'assistant/supervisor.css' %}?v=2"><link rel="stylesheet" href="{% static 'assistant/supervisor_layout.css' %}?v=1"></head>
+<body class="supervisor-page">
+  <div class="supervisor-shell">
+    <aside class="supervisor-sidebar">
+      <a class="supervisor-brand" href="{% url 'assistant:supervisor_dashboard' %}"><span>M</span><strong>MECHORA</strong></a>
+      <div class="supervisor-role">SUPERVISOR WORKSPACE</div>
+      <nav class="supervisor-nav" aria-label="Supervisor navigation"><a href="{% url 'assistant:supervisor_dashboard' %}">Overview</a><a class="active" href="{% url 'assistant:supervisor_history' %}">Question history</a></nav>
+      <div class="supervisor-sidebar-footer"><span>{{ request.user.username }}</span><a href="{% url 'logout' %}">Log out</a></div>
+    </aside>
+    <main class="supervisor-content"><header class="supervisor-content-header"><div><div class="supervisor-kicker">SUPERVISOR WORKSPACE</div><h1>Question history</h1><p>Review engineer questions, answers, citations, and unresolved evidence.</p><span class="live-data-badge">● Live assistant records</span></div></header>
+      <nav class="status-filters"><a class="{% if not selected_status %}active{% endif %}" href="{% url 'assistant:supervisor_history' %}">All</a><a class="{% if selected_status == 'ANSWERED' %}active{% endif %}" href="?status=ANSWERED">Answered</a><a class="{% if selected_status == 'INSUFFICIENT' %}active{% endif %}" href="?status=INSUFFICIENT">Insufficient</a><a class="{% if selected_status == 'SYSTEM_ERROR' %}active{% endif %}" href="?status=SYSTEM_ERROR">System errors</a></nav>
+      <section class="history-table-wrap"><table><thead><tr><th>Engineer</th><th>Question</th><th>Machine</th><th>Status</th><th>Timestamp</th></tr></thead><tbody>{% for item in questions %}<tr><td>{{ item.user.username }}</td><td><a class="question-link" href="{% url 'assistant:supervisor_question_detail' item.pk %}"><strong>{{ item.display_title }}</strong><small>{{ item.answer_text|truncatechars:130 }}</small></a></td><td>{{ item.machine.machine_id }}</td><td><span class="status status-{{ item.status|lower }}">{{ item.status }}</span></td><td>{{ item.created_at|date:"M j, Y H:i" }}</td></tr>{% empty %}<tr><td colspan="5" class="empty-history">No questions match this filter.</td></tr>{% endfor %}</tbody></table></section>
+    </main>
+  </div>
+</body></html>

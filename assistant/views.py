@@ -173,13 +173,33 @@ def supervisor_dashboard(request):
         return redirect("login")
     if _role_for_user(request.user) != "Supervisor":
         return JsonResponse({"detail": "Supervisor role required."}, status=403)
+    questions = Question.objects.select_related("user", "machine").order_by("-created_at")
+    return render(
+        request,
+        "assistant/supervisor_dashboard.html",
+        {
+            "total_questions": questions.count(),
+            "answered_count": questions.filter(status=Question.Status.ANSWERED).count(),
+            "insufficient_count": questions.filter(status=Question.Status.INSUFFICIENT).count(),
+            "error_count": questions.filter(status=Question.Status.SYSTEM_ERROR).count(),
+            "recent_questions": questions[:5],
+        },
+    )
+
+
+@require_GET
+def supervisor_history(request):
+    if not request.user.is_authenticated:
+        return redirect("login")
+    if _role_for_user(request.user) != "Supervisor":
+        return JsonResponse({"detail": "Supervisor role required."}, status=403)
     status = request.GET.get("status", "").strip().upper()
     questions = Question.objects.select_related("user", "machine").order_by("-created_at")
     if status in {choice[0] for choice in Question.Status.choices}:
         questions = questions.filter(status=status)
     return render(
         request,
-        "assistant/supervisor_dashboard.html",
+        "assistant/supervisor_history.html",
         {"questions": questions[:200], "selected_status": status},
     )
 

@@ -296,6 +296,37 @@ function hideLoadingIndicator() {
   }
 }
 
+function uniqueCitationSources(sources) {
+  const seen = new Set();
+  return (Array.isArray(sources) ? sources : []).filter((source) => {
+    const key = [
+      source.manual_id,
+      source.document_name,
+      source.revision,
+      source.page_number,
+    ].join("|");
+    if (seen.has(key)) return false;
+    seen.add(key);
+    return true;
+  });
+}
+
+function citationGroups(sources) {
+  const groups = new Map();
+  uniqueCitationSources(sources).forEach((source) => {
+    const key = [source.manual_id, source.document_name, source.revision].join("|");
+    if (!groups.has(key)) groups.set(key, { ...source, pages: [] });
+    groups.get(key).pages.push(source);
+  });
+  return [...groups.values()];
+}
+
+function citationCardFor(sourceId) {
+  return [...document.querySelectorAll(".citation-card")].find((card) =>
+    (card.dataset.sourceIds || "").split(",").includes(String(sourceId))
+  );
+}
+
 function attachCitationInteractions(bubble, sources, question, answer) {
   bubble.querySelectorAll(".inline-citation-badge").forEach((badge) => {
     badge.addEventListener("click", (e) => {
@@ -308,7 +339,7 @@ function attachCitationInteractions(bubble, sources, question, answer) {
         (s.source_id || `S${idx + 1}`).toUpperCase() === sourceId.toUpperCase()
       );
       if (sourceIndex >= 0) {
-        const card = document.querySelectorAll(".citation-card")[sourceIndex];
+        const card = citationCardFor(sources[sourceIndex].source_id || `S${sourceIndex + 1}`);
         if (card) {
           selectCitation(sources[sourceIndex], card, question, answer);
           card.scrollIntoView({ behavior: "smooth", block: "nearest" });
@@ -334,6 +365,7 @@ function animateAssistantText(bubble, text, onComplete) {
 }
 
 function addMessage(kind, text, status = "", sources = [], question = "", animate = false) {
+  sources = uniqueCitationSources(sources);
   const conversation = $("#conversation");
   $("#welcome")?.remove();
   const wrapper = document.createElement("div");
@@ -371,17 +403,19 @@ function addMessage(kind, text, status = "", sources = [], question = "", animat
     sourceRow = document.createElement("div");
     sourceRow.className = "message-sources";
     sourceRow.hidden = animate;
-    sources.forEach((source, index) => {
+    citationGroups(sources).forEach((source) => {
       const sourceButton = document.createElement("button");
       sourceButton.type = "button";
       sourceButton.className = "message-source";
-      sourceButton.textContent = `[${source.source_id || `S${index + 1}`}] ${source.document_name} · p.${source.page_number}`;
+      const sourceIds = source.pages.map((item, pageIndex) => item.source_id || `S${pageIndex + 1}`);
+      const pages = [...new Set(source.pages.map((item) => item.page_number))].join(", ");
+      sourceButton.textContent = `[${sourceIds.join(", ")}] ${source.document_name} · p.${pages}`;
       sourceButton.addEventListener("click", () => {
         setEvidenceVisible(true);
         renderCitations(sources, question, text, false);
-        const card = document.querySelectorAll(".citation-card")[index];
+        const card = citationCardFor(sourceIds[0]);
         if (card) {
-          selectCitation(sources[index], card, question, text);
+          selectCitation(source.pages[0], card, question, text);
           card.scrollIntoView({ behavior: "smooth", block: "nearest" });
         }
       });
@@ -811,6 +845,7 @@ try {
 } catch (err) {}
 
 function renderCitations(sources, question = "", answer = "", autoSelect = true) {
+  sources = uniqueCitationSources(sources);
   activeQuestion = question;
   activeAnswer = answer;
   const empty = $("#citation-empty");
@@ -824,18 +859,31 @@ function renderCitations(sources, question = "", answer = "", autoSelect = true)
   }
   empty.hidden = true;
   container.hidden = false;
-  sources.forEach((source, index) => {
+  citationGroups(sources).forEach((source, index) => {
     const card = document.createElement("article");
     card.className = "citation-card";
-    card.innerHTML = '<div class="source-tag"></div><div class="source-title"></div><div class="source-meta"></div><div class="source-passage"></div><a class="source-open" target="_blank" rel="noopener">Open cited page ↗</a>';
-    card.querySelector(".source-tag").textContent = `[${source.source_id || `S${index + 1}`}]`;
+    card.dataset.sourceIds = source.pages.map((item, pageIndex) => item.source_id || `S${pageIndex + 1}`).join(",");
+    card.innerHTML = '<div class="source-tag"></div><div class="source-title"></div><div class="source-meta"></div><div class="citation-pages"></div><div class="source-passage"></div><a class="source-open" target="_blank" rel="noopener">Open cited page ↗</a>';
+    card.querySelector(".source-tag").textContent = source.pages.map((item, pageIndex) => `[${item.source_id || `S${pageIndex + 1}`}]`).join(" ");
     card.querySelector(".source-title").textContent = source.document_name;
-    card.querySelector(".source-meta").textContent = `Revision ${source.revision} · PDF page ${source.page_number}`;
+    card.querySelector(".source-meta").textContent = `Revision ${source.revision} · ${source.pages.length} cited page${source.pages.length === 1 ? "" : "s"}`;
+    const pageList = card.querySelector(".citation-pages");
+    source.pages.forEach((pageSource, pageIndex) => {
+      const pageButton = document.createElement("button");
+      pageButton.type = "button";
+      pageButton.className = "citation-page-button";
+      pageButton.textContent = `Page ${pageSource.page_number}`;
+      pageButton.addEventListener("click", (event) => {
+        event.stopPropagation();
+        selectCitation(pageSource, card, question, answer);
+      });
+      pageList.append(pageButton);
+    });
     card.querySelector(".source-passage").textContent = source.passage;
     card.querySelector(".source-open").href = pdfUrlFor(source);
-    card.addEventListener("click", () => selectCitation(source, card, question, answer));
+    card.addEventListener("click", () => selectCitation(source.pages[0], card, question, answer));
     container.append(card);
-    if (index === 0 && autoSelect) selectCitation(source, card, question, answer);
+    if (index === 0 && autoSelect) selectCitation(source.pages[0], card, question, answer);
   });
 }
 

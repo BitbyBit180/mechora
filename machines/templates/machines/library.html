@@ -1,0 +1,58 @@
+{% load static %}
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Machines · MECHORA</title>
+  <link rel="stylesheet" href="{% static 'machines/machine_manuals.css' %}?v=2">
+</head>
+<body class="manuals-page library-page">
+  <header class="manuals-topbar">
+    <a class="manuals-brand" href="{% url 'engineer:machine_library' %}"><span>M</span> MECHORA</a>
+    <nav class="library-nav">
+      <a class="back-link" href="{% url 'assistant:chat' %}">Open assistant</a>
+      <a class="back-link" href="{% url 'logout' %}">Sign out</a>
+    </nav>
+  </header>
+
+  <main class="manuals-container">
+    <div class="manuals-kicker">ENGINEER WORKSPACE</div>
+    <div class="machine-heading library-heading">
+      <div>
+        <h1>Select a machine</h1>
+        <p>Browse the available manuals before asking the assistant for grounded operating guidance.</p>
+      </div>
+      <span class="machine-badge">Engineer access</span>
+    </div>
+
+    <section class="documents-section" aria-labelledby="machines-title">
+      <div class="documents-heading">
+        <h2 id="machines-title">Machines and manuals</h2>
+        <p>{{ machines|length }} machine{{ machines|length|pluralize }} with ingested manuals available.</p>
+      </div>
+      <div class="machine-library-grid">
+        {% for machine in machines %}
+        <article class="machine-library-card">
+          <div class="machine-library-card-top">
+            <div>
+              <div class="machine-library-id">{{ machine.machine_id }}</div>
+              <h3>{{ machine.machine_name|default:machine.machine_id }}</h3>
+              <p>{{ machine.model|default:"Manufacturing equipment" }}</p>
+            </div>
+            <span class="machine-library-count">{{ machine.completed_manuals|length }} PDF{{ machine.completed_manuals|length|pluralize }}</span>
+          </div>
+          {% if machine.description %}<p class="machine-library-description">{{ machine.description }}</p>{% endif %}
+          <div class="machine-library-actions">
+            <a class="document-open" href="{% url 'engineer:machine_manuals' machine.machine_id %}">View manuals ↗</a>
+            <a class="library-ask" href="{% url 'assistant:chat' %}?machine={{ machine.machine_id }}">Ask assistant</a>
+          </div>
+        </article>
+        {% empty %}
+        <div class="documents-empty"><strong>No ingested manuals available</strong><p>Ask an administrator to upload and ingest a manual before using the assistant.</p></div>
+        {% endfor %}
+      </div>
+    </section>
+  </main>
+</body>
+</html>
