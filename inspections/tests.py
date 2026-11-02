@@ -118,7 +118,8 @@ class InspectionWorkflowTests(TestCase):
 
         reloaded = Inspection.objects.get(pk=item.pk)
         self.assertEqual(reloaded.product_id, self.product.pk)
-        self.assertTrue(reloaded.image.name.endswith("persisted.png"))
+        self.assertTrue(reloaded.image.name.startswith("inspections/"))
+        self.assertTrue(reloaded.image.name.endswith(".png"))
         self.assertEqual(reloaded.original_filename, "persisted.png")
         self.assertEqual(reloaded.predicted_class, "Defective")
         self.assertEqual(reloaded.confidence, 0.875)
