@@ -7,7 +7,7 @@ from django.contrib import messages
 from django.utils import timezone
 from unfold.admin import ModelAdmin
 
-from .models import Inspection, InspectionBatch, InspectionReview
+from .models import IncidentReview, IncidentReviewHistory, Inspection, InspectionBatch, InspectionReview, QualityIncident
 from .tasks import process_inspection
 from .services.validation import validate_image
 from products.models import Product
@@ -140,3 +140,25 @@ class InspectionReviewAdmin(ModelAdmin):
     list_filter = ("review_status",)
     search_fields = ("inspection__inspection_id", "reviewer__username")
     readonly_fields = ("inspection", "reviewed_class", "review_status", "reviewer", "comment", "reviewed_at")
+
+
+@admin.register(QualityIncident)
+class QualityIncidentAdmin(ModelAdmin):
+    list_display = ("id", "inspection", "product_id", "original_prediction", "evidence_status", "review_status", "created_at")
+    list_filter = ("evidence_status",)
+    search_fields = ("inspection__inspection_id", "product_id", "created_by__username")
+    readonly_fields = tuple(field.name for field in QualityIncident._meta.fields)
+
+
+@admin.register(IncidentReview)
+class IncidentReviewAdmin(ModelAdmin):
+    list_display = ("incident", "status", "reviewer", "reviewed_at")
+    list_filter = ("status",)
+    readonly_fields = tuple(field.name for field in IncidentReview._meta.fields)
+
+
+@admin.register(IncidentReviewHistory)
+class IncidentReviewHistoryAdmin(ModelAdmin):
+    list_display = ("incident", "status", "reviewer", "changed_by", "changed_at")
+    list_filter = ("status",)
+    readonly_fields = tuple(field.name for field in IncidentReviewHistory._meta.fields)
