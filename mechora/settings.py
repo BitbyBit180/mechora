@@ -184,7 +184,10 @@ REST_FRAMEWORK = {
 SESSION_COOKIE_HTTPONLY = True
 SESSION_COOKIE_AGE = 86400  # 24 hours session lifetime
 SESSION_EXPIRE_AT_BROWSER_CLOSE = False
-SESSION_SAVE_EVERY_REQUEST = True
+# Read-only API polling should not rewrite the session on every request. This
+# also avoids SessionInterrupted when a logout happens at the same time as a
+# dashboard/incident refresh.
+SESSION_SAVE_EVERY_REQUEST = False
 SESSION_COOKIE_SAMESITE = "Lax"
 CSRF_COOKIE_SAMESITE = "Lax"
 
@@ -194,6 +197,9 @@ SECURE_SSL_REDIRECT = os.environ.get("SECURE_SSL_REDIRECT", "false").lower() in 
 # Redis instance in deployment environments.
 CELERY_BROKER_URL = os.environ.get("CELERY_BROKER_URL", "redis://127.0.0.1:6379/0")
 CELERY_RESULT_BACKEND = os.environ.get("CELERY_RESULT_BACKEND", CELERY_BROKER_URL)
+# Keep the quality-incident task explicitly imported so every fresh worker
+# advertises the batch task even if autodiscovery is changed later.
+CELERY_IMPORTS = ("inspections.tasks",)
 CELERY_TASK_TRACK_STARTED = True
 CELERY_TASK_TIME_LIMIT = 30 * 60
 CELERY_TASK_ACKS_LATE = True
