@@ -5,6 +5,7 @@
 {% block role_label %}Supervisor workspace{% endblock %}
 {% block primary_nav %}
 <a class="sidebar-link" href="{% url 'inspections:supervisor' %}"><span>▦</span> Review dashboard</a>
+<a class="sidebar-link" href="{% url 'inspections:quality_incidents' %}"><span>☑</span> Quality Incidents</a>
 <a class="sidebar-link" href="{% url 'inspections:supervisor_questions' %}"><span>✦</span> Question history</a>
 <a class="sidebar-link active" href="{% url 'inspections:evaluation' %}"><span>▤</span> Model evaluation</a>
 {% endblock %}
