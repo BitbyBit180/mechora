@@ -96,14 +96,18 @@ class ChromaVectorStore:
         *,
         machine_id: str,
         n_results: int = 5,
+        where: dict | None = None,
     ) -> dict:
         """Query with the machine filter passed into Chroma itself."""
 
         try:
+            filters = {"machine_id": machine_id}
+            if where:
+                filters = {"$and": [filters, where]}
             return self.collection.query(
                 query_embeddings=[embedding],
                 n_results=n_results,
-                where={"machine_id": machine_id},
+                where=filters,
                 include=["documents", "metadatas", "distances"],
             )
         except Exception as exc:

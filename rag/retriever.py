@@ -97,13 +97,19 @@ class Retriever:
         self.distance_cutoff = distance_cutoff
         self.top_k = top_k
 
-    def retrieve(self, question: str, machine_id: str) -> list[RetrievedChunk]:
+    def retrieve(
+        self,
+        question: str,
+        machine_id: str,
+        *,
+        allowed_documents: set[tuple[str, str]] | None = None,
+    ) -> list[RetrievedChunk]:
         try:
             query_embedding = self.embedding_client.embed_query(question)
             raw = self.vector_store.query(
                 query_embedding,
                 machine_id=machine_id,
-                n_results=self.top_k,
+                n_results=max(self.top_k, 20 if allowed_documents else self.top_k),
             )
         except Exception as exc:
             if isinstance(exc, RetrievalError):
@@ -121,6 +127,10 @@ class Retriever:
             # and this assertion prevents an unsafe/misbehaving test store from
             # leaking another machine into the generation context.
             if str(metadata.get("machine_id")) != str(machine_id):
+                continue
+            if allowed_documents and (
+                str(metadata.get("document_name")), str(metadata.get("revision", ""))
+            ) not in allowed_documents:
                 continue
             distance = float(_first(distances, index, float("inf")))
             if distance > self.distance_cutoff:
