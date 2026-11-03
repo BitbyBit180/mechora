@@ -4,6 +4,7 @@
 {% block role_label %}Engineer workspace{% endblock %}
 {% block primary_nav %}
 <a class="sidebar-link" href="{% url 'inspections:dashboard' %}"><span>▦</span> Inspection dashboard</a>
+<a class="sidebar-link" href="{% url 'inspections:quality_incidents' %}"><span>☑</span> Quality Incidents</a>
 {% endblock %}
 {% block secondary_nav %}
 <a class="sidebar-link active" href="{% url 'engineer:machine_library' %}"><span>⚙</span> Machines &amp; manuals</a>

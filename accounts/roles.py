@@ -60,6 +60,7 @@ ROLE_PERMISSIONS_MAP = {
         ("inspections", "change_inspection"),
         ("inspections", "view_inspectionbatch"),
         ("inspections", "view_inspectionreview"),
+        ("inspections", "view_qualityincident"),
     ],
     ROLE_ENGINEER: [
         # Engineering access: read equipment, documentation, and query logs
@@ -70,6 +71,7 @@ ROLE_PERMISSIONS_MAP = {
         ("products", "view_product"),
         ("inspections", "add_inspection"),
         ("inspections", "view_inspection"),
+        ("inspections", "view_qualityincident"),
     ],
     ROLE_SUPERVISOR: [
         # Supervisor access: read equipment, documentation, and operational monitoring
@@ -83,6 +85,12 @@ ROLE_PERMISSIONS_MAP = {
         ("inspections", "view_inspectionreview"),
         ("inspections", "add_inspectionreview"),
         ("inspections", "change_inspectionreview"),
+        ("inspections", "view_qualityincident"),
+        ("inspections", "view_incidentreview"),
+        ("inspections", "view_incidentreviewhistory"),
+        ("inspections", "add_incidentreview"),
+        ("inspections", "change_incidentreview"),
+        ("inspections", "view_incidentreviewhistory"),
     ],
 }
 
